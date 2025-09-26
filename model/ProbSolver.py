@@ -1,18 +1,17 @@
-from BayesianInference import *
-from ElementExtractor import *
-from utils import *
-from DataLoader import *
-from Timeline import *
-from model_adjustment import *
+from .BayesianInference import *
+from .ElementExtractor import *
+from .utils import *
+from .DataLoader import *
+from .Timeline import *
+from .model_adjustment import *
+import baselines.AutoToM.model.probs as probs
+import baselines.AutoToM.model.NodeResultTracker as NodeResultTracker
+import baselines.AutoToM.model.TimestepInference as TimestepInference
+import baselines.AutoToM.model.ProblemParser as ProblemParser
+import baselines.AutoToM.model.Nested as Nested
 import numpy as np
 import time
-import utils
-import probs
 from scipy.stats import entropy
-import NodeResultTracker
-import TimestepInference
-import ProblemParser
-import Nested
 import argparse
 
 """
@@ -47,8 +46,8 @@ class ProblemSolver:
         assigned_model=None,
         model_name="sobag",
         episode_name="",
-        llm="gpt-4o",
-        hypo_llm="gpt-4o",
+        llm="gpt-4.1",
+        hypo_llm="gpt-4.1",
         verbose=False,
         dataset_name=None,
         hypo_method=None,
@@ -109,15 +108,15 @@ class ProblemSolver:
 
         self.start_cost = (
             probs.cost_of_estimating_likelihood
-            + utils.cost_of_information_extracting
-            + utils.cost_of_proposing_hypotheses
+            + cost_of_information_extracting
+            + cost_of_proposing_hypotheses
         )
 
         self.middle_result_cost = self.start_cost
         self.start_api = (
             probs.times_of_estimating
-            + utils.times_of_information_extracting
-            + utils.times_of_proposing_hypotheses
+            + times_of_information_extracting
+            + times_of_proposing_hypotheses
         )
         self.middle_api = self.start_api
         self.states = precomputed_states
@@ -144,8 +143,8 @@ class ProblemSolver:
         self.infer_belief_at_timestamp = TimestepInference.infer_belief_at_timestamp
         self.load_parsed_result_into_self = ProblemParser.load_parsed_result_into_self
         self.parse_story_and_question = ProblemParser.parse_story_and_question
-        self.contains_utterance = utils.contains_utterance
-        self.check_nested = utils.check_nested
+        self.contains_utterance = contains_utterance
+        self.check_nested = check_nested
         self.get_nested_states = Nested.get_nested_states
         self.save_nested_results = Nested.save_nested_results
 
@@ -444,13 +443,13 @@ class ProblemSolver:
         self.middle_result_time = time.time()
         self.middle_result_cost = (
             probs.cost_of_estimating_likelihood
-            + utils.cost_of_information_extracting
-            + utils.cost_of_proposing_hypotheses
+            + cost_of_information_extracting
+            + cost_of_proposing_hypotheses
         )
         self.middle_api = (
             probs.times_of_estimating
-            + utils.times_of_information_extracting
-            + utils.times_of_proposing_hypotheses
+            + times_of_information_extracting
+            + times_of_proposing_hypotheses
         )
 
         no_observation_hypothesis = "NONE"
@@ -830,13 +829,13 @@ def main(args):
         end_time = time.time()
         end_cost = (
             probs.cost_of_estimating_likelihood
-            + utils.cost_of_information_extracting
-            + utils.cost_of_proposing_hypotheses
+            + cost_of_information_extracting
+            + cost_of_proposing_hypotheses
         )
         end_api = (
             probs.times_of_estimating
-            + utils.times_of_information_extracting
-            + utils.times_of_proposing_hypotheses
+            + times_of_information_extracting
+            + times_of_proposing_hypotheses
         )
 
         save_estimation_dict(dataset_name, solver.estimation_dictionary)
@@ -948,9 +947,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "--llm_model",
         choices=[
-            "gpt-4o",
+            "gpt-4.1",
         ],
-        default="gpt-4o",
+        default="gpt-4.1",
     )
     parser.add_argument("--automated", action="store_true", help="Run automated model.")
     parser.add_argument(

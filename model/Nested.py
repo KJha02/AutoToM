@@ -1,5 +1,7 @@
-from utils import *
-from ElementExtractor import *
+from .utils import *
+from .ElementExtractor import *
+
+prefix_path = "/mmfs1/gscratch/socialrl/kjha/automaticity/baselines/AutoToM"
 
 def get_nested_states(
     self,
@@ -8,7 +10,7 @@ def get_nested_states(
     variable_values_with_time,
     orig_variable_values_with_time,
 ):
-    from ProbSolver import ProblemSolver, argmax, argmin
+    from .ProbSolver import ProblemSolver, argmax, argmin
     # time_variables: state, ..., (variables).
     # orig_time_variables: consist of the ground truth states, but the timestamps are not aligned.
     # variable_values with time: values in story of chunks, states, ....
@@ -138,7 +140,7 @@ def save_nested_results(self, i, s, prob, story_now, nested_question, nested_cho
     """
     Helper function to save nested reasoning results to CSV.n
     """
-    os.makedirs('../results/nested_results', exist_ok=True)
+    os.makedirs(f'{prefix_path}/results/nested_results', exist_ok=True)
     
     data = {
         'timestamp': i,
@@ -150,7 +152,7 @@ def save_nested_results(self, i, s, prob, story_now, nested_question, nested_cho
     }
     df = pd.DataFrame([data])
     
-    csv_path = f'../results/nested_results/{self.episode_name}_{self.first_agent_name}.csv'
+    scsv_path = f'{prefix_path}/results/nested_results/{self.episode_name}_{self.first_agent_name}.csv'
     
     df.to_csv(csv_path, mode='a', header=not os.path.exists(csv_path), index=False)
 

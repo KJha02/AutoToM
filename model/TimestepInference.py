@@ -1,6 +1,6 @@
-from ElementExtractor import *
-from utils import *
-from BayesianInference import BayesianInferenceModel
+from .ElementExtractor import *
+from .utils import *
+from .BayesianInference import BayesianInferenceModel
 
 def infer_belief_at_timestamp(
     self,

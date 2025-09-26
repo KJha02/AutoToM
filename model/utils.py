@@ -14,6 +14,19 @@ import torch
 import time
 import glob
 
+path_prefix = '/mmfs1/gscratch/socialrl/kjha/automaticity/baselines/AutoToM/model'
+
+current_model_name = os.environ['CURRENT_MODEL_NAME']
+pipeline = transformers.pipeline(
+    "text-generation",
+    model=current_model_name,
+    model_kwargs={"torch_dtype": torch.bfloat16},
+    device_map='auto',
+    trust_remote_code=True,
+    # max_num_batched_tokens=40000,
+    # token=API_TOKEN,
+)
+
 
 def get_info(s, num=0):
     i = num
@@ -70,7 +83,7 @@ def gpt_request_multimodal(
     base64_images,
     temperature=0.0,
     max_tokens=3000,
-    model="gpt-4o",
+    model="gpt-4.1-nano",
     hypo=False,
     verbose=False,
 ):
@@ -104,9 +117,9 @@ def gpt_request_multimodal(
             max_tokens=max_tokens,
             seed=42,
         )
-        if model == "gpt-4":
+        if model == "gpt-4o":
             inp, op = 30 / 1000000, 60 / 1000000
-        elif model == "gpt-4o":
+        elif "gpt-4.1-nano" in model:
             inp, op = 5 / 1000000, 15 / 1000000
         elif model == "gpt-3.5-turbo":
             inp, op = 0.5 / 1000000, 1.5 / 1000000
@@ -139,39 +152,32 @@ def gpt_request_multimodal(
 
 
 def llm_request(
-    prompt, temperature=0.0, max_tokens=3000, model="gpt-4o", hypo=False, verbose=False
+    prompt, temperature=0.0, max_tokens=3000, model="gpt-4.1-nano", hypo=False, verbose=False
 ):
     if "gpt" in model:
         return gpt_request(
             prompt,
             temperature=temperature,
             max_tokens=max_tokens,
-            model="gpt-4o",
+            model=model,
             hypo=hypo,
             verbose=verbose,
         )
-    elif "Llama-3.1-8B" in model:
-        return llama_request(prompt, model, max_tokens=200)
+    else:
+        return llama_request(prompt, model, max_tokens=max_tokens)
 
 
 def llama_request(
-    prompt, model_id="meta-llama/Meta-Llama-3.1-8B-Instruct", max_tokens=200
+    prompt, model_id="meta-llama/Llama-3.1-8B-Instruct", max_tokens=200
 ):
-    API_TOKEN = os.environ["LLAMA_API_KEY"]
-    if torch.cuda.is_available():
-        device = 0  # Assuming you want to use the first GPU
-        print("GPU Available: Using GPU")
-    else:
-        device = -1  # Use CPU
-        print("GPU Not Available: Using CPU")
+    # API_TOKEN = os.environ["LLAMA_API_KEY"]
+    # if torch.cuda.is_available():
+    #     device = 0  # Assuming you want to use the first GPU
+    #     print("GPU Available: Using GPU")
+    # else:
+    #     device = -1  # Use CPU
+    #     print("GPU Not Available: Using CPU")
 
-    pipeline = transformers.pipeline(
-        "text-generation",
-        model=model_id,
-        model_kwargs={"torch_dtype": torch.bfloat16},
-        device_map=device,
-        token=API_TOKEN,
-    )
 
     messages = [
         {"role": "system", "content": "You are a helpful assistant."},
@@ -180,7 +186,7 @@ def llama_request(
 
     outputs = pipeline(
         messages,
-        max_new_tokens=3000,
+        max_new_tokens=max_tokens,
     )
     generated_text = outputs[0]["generated_text"][-1]["content"]
     generated_text = generated_text.replace("\n", " ")
@@ -192,7 +198,7 @@ def gpt_request(
     prompt,
     temperature=0.0,
     max_tokens=3000,
-    model="gpt-4o",
+    model="gpt-4.1-nano",
     hypo=False,
     verbose=False,
     message_role="user",
@@ -240,9 +246,9 @@ def gpt_request(
                 max_tokens=max_tokens,
                 seed=seed,
             )
-        if model == "gpt-4":
+        if model == "gpt-4o":
             inp, op = 30 / 1000000, 60 / 1000000
-        elif model == "gpt-4o":
+        elif "gpt-4.1-nano" in model:
             inp, op = 5 / 1000000, 15 / 1000000
         elif model == "gpt-3.5-turbo":
             inp, op = 0.5 / 1000000, 1.5 / 1000000
@@ -330,7 +336,7 @@ def return_letters(n):
 accumulated_cost_logits = 0
 
 
-def get_logits(info, question, choices, model="gpt-4o"):
+def get_logits(info, question, choices, model="gpt-4.1-nano"):
     global accumulated_cost_logits
     client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
     inst = f"""Answer the question based on the story.
@@ -364,9 +370,9 @@ Question: {question}
         logits = {}
         # print(logprobs)
 
-        if model == "gpt-4":
+        if model == "gpt-4o":
             inp, op = 30 / 1000000, 60 / 1000000
-        elif model == "gpt-4o":
+        elif "gpt-4.1-nano" in model:
             inp, op = 5 / 1000000, 15 / 1000000
         elif model == "gpt-3.5-turbo":
             inp, op = 0.5 / 1000000, 1.5 / 1000000
@@ -426,7 +432,7 @@ def parse_extraction(resp):
 
 def rephrase_choices_wording(c, story, llm):
     with open(
-        f"prompts/prompts_{llm}/rephrase_choices_wording.txt", "r", encoding="utf-8"
+        f"{path_prefix}/prompts/prompt_dir/prompt_model/rephrase_choices_wording.txt", "r", encoding="utf-8"
     ) as prompt_file:
         prompt_template = prompt_file.read().strip()
     prompt = prompt_template.replace("[Sentence]", f"Sentence: {c}")
@@ -438,7 +444,7 @@ def rephrase_choices_wording(c, story, llm):
 
 def rephrase_choices(question, choices, llm, wording=False):
     with open(
-        f"prompts/prompts_{llm}/rephrase_choices.txt", "r", encoding="utf-8"
+        f"{path_prefix}/prompts/prompt_dir/prompt_model/rephrase_choices.txt", "r", encoding="utf-8"
     ) as prompt_file:
         prompt_template = prompt_file.read().strip()
     prompt = prompt_template.replace("[Question]", f"Question: {question}")
@@ -464,7 +470,7 @@ def rephrase_choices(question, choices, llm, wording=False):
 
 def find_inference_timestep(story, choices, llm):
     with open(
-        f"prompts/prompts_{llm}/find_inference_timestep.txt", "r", encoding="utf-8"
+        f"{path_prefix}/prompts/prompt_dir/prompt_model/find_inference_timestep.txt", "r", encoding="utf-8"
     ) as prompt_file:
         prompt_template = prompt_file.read().strip()
     prompt = prompt_template.replace("[Story]", f"Story: {story}")
@@ -480,7 +486,7 @@ def find_inference_timestep(story, choices, llm):
 
 def find_relevant_entities(choices, agents, llm):
     with open(
-        f"prompts/prompts_{llm}/find_relevant_entities.txt", "r", encoding="utf-8"
+        f"{path_prefix}/prompts/prompt_dir/prompt_model/find_relevant_entities.txt", "r", encoding="utf-8"
     ) as prompt_file:
         prompt_template = prompt_file.read().strip()
 
@@ -498,7 +504,7 @@ def find_relevant_entities(choices, agents, llm):
 
 def rewrite_belief_info(info, init_states, llm):
     with open(
-        f"prompts/prompts_{llm}/rewrite_belief_info.txt", "r", encoding="utf-8"
+        f"{path_prefix}/prompts/prompt_dir/prompt_model/rewrite_belief_info.txt", "r", encoding="utf-8"
     ) as prompt_file:
         prompt_template = prompt_file.read().strip()
     if "know" not in info:  # not belief sentence
@@ -544,7 +550,7 @@ def reconstruct_story_nested(story, agent, llm, dataset_name):
 
 def rephrase_story_nested_single(story, agent, sentence, llm, dataset_name):
     with open(
-        f"prompts/prompts_{llm}/rephrase_story_nested_single.txt", "r", encoding="utf-8"
+        f"{path_prefix}/prompts/prompt_dir/prompt_model/rephrase_story_nested_single.txt", "r", encoding="utf-8"
     ) as prompt_file:
         prompt_template = prompt_file.read().strip()
     prompt = prompt_template.replace("[Story]", f"Story: {story}")
@@ -580,7 +586,7 @@ def mmtom_modality_fusion(video_info, text_variables, agent_name):
 
 def story_fusion(video_story, text_story, llm):
     with open(
-        f"prompts/prompts_{llm}/story_fusion.txt", "r", encoding="utf-8"
+        f"{path_prefix}/prompts/prompt_dir/prompt_model/story_fusion.txt", "r", encoding="utf-8"
     ) as prompt_file:
         prompt_template = prompt_file.read().strip()
     prompt = prompt_template.replace("[video_story]", f"Video story: {video_story}")
@@ -597,7 +603,7 @@ def story_fusion(video_story, text_story, llm):
 def correct_visual_actions(action, choices, llm):
     # visual action might have errors. Fuse text to correct it
     with open(
-        f"prompts/prompts_{llm}/correct_visual_info.txt", "r", encoding="utf-8"
+        f"{path_prefix}/prompts/prompt_dir/prompt_model/correct_visual_info.txt", "r", encoding="utf-8"
     ) as prompt_file:
         prompt_template = prompt_file.read().strip()
     prompt = prompt_template.replace("[Action]", f"Action: {action}")
@@ -649,7 +655,7 @@ def get_filename_with_episode_name(
 
 def find_agents(story, llm):
     with open(
-        f"prompts/prompts_{llm}/get_agent_names.txt", "r", encoding="utf-8"
+        f"{path_prefix}/prompts/prompt_dir/prompt_model/get_agent_names.txt", "r", encoding="utf-8"
     ) as prompt_file:
         prompt_template = prompt_file.read().strip()
     prompt = prompt_template.replace("[Story]", f"Story: {story}")
@@ -662,7 +668,7 @@ def find_agents(story, llm):
 
 def find_inferred_agent(question, choices, llm):
     with open(
-        f"prompts/prompts_{llm}/get_inferred_agent.txt", "r", encoding="utf-8"
+        f"{path_prefix}/prompts/prompt_dir/prompt_model/get_inferred_agent.txt", "r", encoding="utf-8"
     ) as prompt_file:
         prompt_template = prompt_file.read().strip()
     prompt = prompt_template.replace("[Question]", f"Question: {question}")

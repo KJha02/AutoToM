@@ -2,6 +2,34 @@ import pandas as pd
 from scipy.stats import entropy
 import openai
 import copy
+import torch
+from openai import OpenAI
+import os
+# Use a pipeline as a high-level helper
+from transformers import pipeline, AutoTokenizer
+
+# Load model across multiple GPUs
+model_name = os.environ['CURRENT_MODEL_NAME']
+from .utils import pipeline as pipe
+# pipe = pipeline(
+#     "text-generation", 
+#     model=model_name, 
+#     torch_dtype=torch.bfloat16,
+#     device_map="auto",  # This will automatically distribute the model across available GPUs
+#     trust_remote_code=True,
+#     # max_num_batched_tokens=40000,
+
+# )
+# Get tokenizer from pipeline
+tokenizer = pipe.tokenizer
+
+# Alternatively, to specify specific devices:
+# pipe = pipeline(
+#     "text-generation", 
+#     model="meta-llama/Llama-3.1-8B", 
+#     torch_dtype=torch.bfloat16,
+#     device_map={0: [0, 1, 2, 3], 1: [4, 5, 6, 7]}  # Map specific layers to specific GPUs
+# )
 
 benefit_threshold = 0.02
 # terminate_threshold = 0.6
@@ -225,16 +253,22 @@ def Bayesian_inference(start_timestep, all_timesteps, verbose, time_variables, p
 
 
 def gpt_call(prompt):
-    response = openai.chat.completions.create(
-        model="gpt-4o",
-        messages=[
-            {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": prompt},
-        ],
-        temperature=0,
-    )
-
-    return response.choices[0].message.content
+    messages = [
+        {"role": "system", "content": "You are a helpful assistant."},
+        {"role": "user", "content": prompt},
+    ]
+    
+    if "gpt" in model_name:
+        client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+        response = client.chat.completions.create(
+            model="gpt-4.1-nano", 
+            messages=messages,
+            temperature=0,
+        )
+        return response.choices[0].message.content
+    else:
+        response = pipe(prompt, max_new_tokens=300, temperature=0.01, return_full_text=False)[0]['generated_text'].strip()
+        return response
 
 
 def initial_model_proposal(question, inference_var, nested, contains_utterance):
@@ -294,7 +328,7 @@ def determine_realistic_questions(question):
         Question: {question} \
         Realistic: "
     response = gpt_call(prompt)
-    if response == "Yes":
+    if "Yes" in response:
         return True
     else:
         return False
@@ -314,7 +348,7 @@ def determine_memory_questions(question):
         Question: {question} \
         Response: "
     response = gpt_call(prompt)
-    if response == "Yes":
+    if "Yes" in response:
         return True
     else:
         return False
@@ -335,7 +369,7 @@ def determine_higher_order_belief(question):
         Question: {question} \
         Higher-order belief: "
     response = gpt_call(prompt)
-    if response == "Yes":
+    if "Yes" in response:
         return True
     else:
         return False

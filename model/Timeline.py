@@ -1,11 +1,11 @@
-from utils import llm_request
+from .utils import llm_request
 import csv
-from ElementExtractor import *
-from DataLoader import *
+from .ElementExtractor import *
+from .DataLoader import *
 import os
 from copy import deepcopy
 
-
+prefix_path = '/mmfs1/gscratch/socialrl/kjha/automaticity/baselines/AutoToM/model'
 class TimeLine:
     def __init__(
         self,
@@ -46,7 +46,7 @@ class TimeLine:
         # original wording
         if "BigToM" in self.dataset_name:
             with open(
-                f"prompts/prompts_{self.llm}/find_inf_actions_bigToM.txt",
+                f"{prefix_path}/prompts/prompt_dir/prompt_model/find_inf_actions_bigToM.txt",
                 "r",
                 encoding="utf-8",
             ) as prompt_file:
@@ -61,7 +61,7 @@ class TimeLine:
                 no_actions = False
         else:
             with open(
-                f"prompts/prompts_{self.llm}/find_inf_actions.txt",
+                f"{prefix_path}/prompts/prompt_dir/prompt_model/find_inf_actions.txt",
                 "r",
                 encoding="utf-8",
             ) as prompt_file:
@@ -78,7 +78,7 @@ class TimeLine:
         else:
             # refined wording
             with open(
-                f"prompts/prompts_{self.llm}/find_inf_actions_wording.txt",
+                f"{prefix_path}/prompts/prompt_dir/prompt_model/find_inf_actions_wording.txt",
                 "r",
                 encoding="utf-8",
             ) as prompt_file:
@@ -92,7 +92,7 @@ class TimeLine:
             if "BigToM" not in self.dataset_name:
                 for i, act in enumerate(action_sequence_wording):
                     with open(
-                        f"prompts/prompts_{self.llm}/refine_wording_action_sequence.txt",
+                        f"{prefix_path}/prompts/prompt_dir/prompt_model/refine_wording_action_sequence.txt",
                         "r",
                         encoding="utf-8",
                     ) as prompt_file:

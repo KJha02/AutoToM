@@ -1,9 +1,10 @@
 import numpy as np
-from utils import *
-from probs import *
+from .utils import *
+from .probs import *
 from copy import deepcopy
 import json
 
+prefix_path = "/mmfs1/gscratch/socialrl/kjha/automaticity/baselines/AutoToM/model"
 
 class Variable:
     def __init__(
@@ -50,7 +51,7 @@ def guided_state_filter(state, information, llm, relevant_entities=None):
                 flag = True
         return flag
     with open(
-        f"prompts/prompts_{llm}/guided_belief_of_state.txt", "r", encoding="utf-8"
+        f"{prefix_path}/prompts/prompt_dir/prompt_model/guided_belief_of_state.txt", "r", encoding="utf-8"
     ) as prompt_file:
         prompt_template = prompt_file.read().strip()
     prompt = prompt_template.replace("[Information]", f"{information}")
@@ -66,7 +67,7 @@ def guided_state_filter(state, information, llm, relevant_entities=None):
 
 def generate_hypo_belief_of_state(s, c, llm):
     with open(
-        f"prompts/prompts_{llm}/hypo_Belief_of_State.txt", "r", encoding="utf-8"
+        f"{prefix_path}/prompts/prompt_dir/prompt_model/hypo_Belief_of_State.txt", "r", encoding="utf-8"
     ) as prompt_file:
         prompt_template = prompt_file.read().strip()
     c_new = deepcopy(c)
@@ -111,7 +112,7 @@ def video_extracted_actions(story_id):
 
 def hypothesis_generation_no_observation(info, character, llm, verbose=False):
     with open(
-        f"prompts/prompts_{llm}/hypo_Observation_no_observation.txt",
+        f"{prefix_path}/prompts/prompt_dir/prompt_model/hypo_Observation_no_observation.txt",
         "r",
         encoding="utf-8",
     ) as prompt_file:
@@ -143,7 +144,7 @@ def hypothesis_generation_no_observation(info, character, llm, verbose=False):
 
 def repetitive_hypothesis_reduction(hypo_c, llm):
     with open(
-        f"prompts/prompts_{llm}/repetitive_hypo_reduction.txt",
+        f"{prefix_path}/prompts/prompt_dir/prompt_model/repetitive_hypo_reduction.txt",
         "r",
         encoding="utf-8",
     ) as prompt_file:
@@ -172,7 +173,7 @@ def hypothesis_generation(
 ):
     if element_name == "Belief" and "BigToM" in dataset_name:
         with open(
-            f"prompts/prompts_{llm}/hypo_{element_name}_BigToM.txt",
+            f"{prefix_path}/prompts/prompt_dir/prompt_model/hypo_{element_name}_BigToM.txt",
             "r",
             encoding="utf-8",
         ) as prompt_file:
@@ -180,7 +181,7 @@ def hypothesis_generation(
 
     else:
         with open(
-            f"prompts/prompts_{llm}/hypo_{element_name}.txt", "r", encoding="utf-8"
+            f"{prefix_path}/prompts/prompt_dir/prompt_model/hypo_{element_name}.txt", "r", encoding="utf-8"
         ) as prompt_file:
             prompt_template = prompt_file.read().strip()
 
@@ -231,7 +232,7 @@ def extraction(story, character, element_name, llm, dataset_name, choices=None):
     ]:
 
         with open(
-            f"prompts/prompts_{llm}/find_{element_name}_BigToM.txt",
+            f"{prefix_path}/prompts/prompt_dir/prompt_model/find_{element_name}_BigToM.txt",
             "r",
             encoding="utf-8",
         ) as prompt_file:
@@ -251,7 +252,7 @@ def extraction(story, character, element_name, llm, dataset_name, choices=None):
             ):
                 observation = eval(resp)[1]
                 with open(
-                    f"prompts/prompts_{llm}/find_Observation_BigToM_extra_info.txt",
+                    f"{prefix_path}/prompts/prompt_dir/prompt_model/find_Observation_BigToM_extra_info.txt",
                     "r",
                     encoding="utf-8",
                 ) as prompt_file:
@@ -271,7 +272,7 @@ def extraction(story, character, element_name, llm, dataset_name, choices=None):
     else:
         try:
             with open(
-                f"prompts/prompts_{llm}/find_{element_name}.txt", "r", encoding="utf-8"
+                f"{prefix_path}/prompts/prompt_dir/prompt_model/find_{element_name}.txt", "r", encoding="utf-8"
             ) as prompt_file:
                 prompt_template = prompt_file.read().strip()
         except FileNotFoundError:
@@ -308,7 +309,7 @@ def extraction(story, character, element_name, llm, dataset_name, choices=None):
 
 def get_context(story, llm):
     with open(
-        f"prompts/prompts_{llm}/find_context.txt", "r", encoding="utf-8"
+        f"{prefix_path}/prompts/prompt_dir/prompt_model/find_context.txt", "r", encoding="utf-8"
     ) as prompt_file:
         prompt_template = prompt_file.read().strip()
     prompt = prompt_template.replace("[Story]", f"Story: {story}")
@@ -322,7 +323,7 @@ def get_initial_state(
     story, llm
 ):  # Note: This is for MuMAToM modality fusion, using the original LIMP prompt
     with open(
-        f"prompts/prompts_{llm}/find_initial_states.txt", "r", encoding="utf-8"
+        f"{prefix_path}/prompts/prompt_dir/prompt_model/find_initial_states.txt", "r", encoding="utf-8"
     ) as prompt_file:
         prompt_template = prompt_file.read().strip()
     prompt = prompt_template.replace("[Story]", f"Story: {story}")
@@ -335,7 +336,7 @@ def get_initial_state(
 
 def get_initial_state_tomi(story, llm):
     with open(
-        f"prompts/prompts_{llm}/find_initial_state_ToMi.txt", "r", encoding="utf-8"
+        f"{prefix_path}/prompts/prompt_dir/prompt_model/find_initial_state_ToMi.txt", "r", encoding="utf-8"
     ) as prompt_file:
         prompt_template = prompt_file.read().strip()
     prompt = prompt_template.replace("[Story]", f"Story: {story}")
@@ -348,12 +349,12 @@ def get_initial_state_tomi(story, llm):
 
 def verify_variable(infer_variable, sentence):
     with open(
-        f"prompts/prompts_gpt-4o/determine_variable.txt", "r", encoding="utf-8"
+        f"{prefix_path}/prompts/prompt_dir/prompt_model/determine_variable.txt", "r", encoding="utf-8"
     ) as prompt_file:
         prompt_template = prompt_file.read().strip()
     prompt = prompt_template.replace("[Sentence]", f"{sentence}")
     prompt = prompt.replace("[Variable]", infer_variable)
-    resp, cost = llm_request(prompt, temperature=0.0, model="gpt-4o")
+    resp, cost = llm_request(prompt, temperature=0.0, model="gpt-4.1-nano")
     return resp
 
 
@@ -365,7 +366,7 @@ def get_inf_var(question, choices, model, llm, dataset_name):
     if "_goal" in dataset_name[-5:]:
         return "Goal"
     with open(
-        f"prompts/prompts_{llm}/find_Inferred_Var.txt", "r", encoding="utf-8"
+        f"{prefix_path}/prompts/prompt_dir/prompt_model/find_Inferred_Var.txt", "r", encoding="utf-8"
     ) as prompt_file:
         prompt_template = prompt_file.read().strip()
     prompt = prompt_template.replace("[Choices]", f"Choices: {choices}")
@@ -387,7 +388,7 @@ def get_inf_var(question, choices, model, llm, dataset_name):
 def get_info_from_question(question, llm, dataset_name):
 
     with open(
-        f"prompts/prompts_{llm}/get_info_from_question.txt", "r", encoding="utf-8"
+        f"{prefix_path}/prompts/prompt_dir/prompt_model/get_info_from_question.txt", "r", encoding="utf-8"
     ) as prompt_file:
         prompt_template = prompt_file.read().strip()
     prompt = prompt_template.replace("[Question]", f"Question: {question}")
@@ -1288,7 +1289,7 @@ def update_state(old_state, change, llm, verbose, dataset_name):
     if change == "NONE" or change == "":
         return old_state
     with open(
-        f"prompts/prompts_{llm}/update_state.txt", "r", encoding="utf-8"
+        f"{prefix_path}/prompts/prompt_dir/prompt_model/update_state.txt", "r", encoding="utf-8"
     ) as prompt_file:
         prompt_template = prompt_file.read().strip()
     prompt = prompt_template.replace("[Old_State]", f"Old State: {old_state}")
@@ -1346,7 +1347,7 @@ def get_answer_memory_questions(story, question, choices, llm):
 
 def split_sentences(story, llm):
     with open(
-        f"prompts/prompts_{llm}/split_sentences.txt", "r", encoding="utf-8"
+        f"{prefix_path}/prompt_dir/prompt_model/split_sentences.txt", "r", encoding="utf-8"
     ) as prompt_file:
         prompt_template = prompt_file.read().strip()
     prompt = prompt_template.replace("[Story]", f"Story: {story}")
@@ -1388,7 +1389,7 @@ if __name__ == "__main__":
     # character = "Jack"
 
     # K = 2
-    llm = "gpt-4o"
+    llm = "gpt-4.1-nano"
     # obs = hypothesis_generation_observation_inf_wrld_rules(
     #     entire_story, story, character, K, llm
     # )

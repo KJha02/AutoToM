@@ -1,5 +1,5 @@
-from utils import *
-from ElementExtractor import *
+from .utils import *
+from .ElementExtractor import *
 
 def load_parsed_result_into_self(self, parsed_result):
     needed_list = [
